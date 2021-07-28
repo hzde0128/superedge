@@ -68,6 +68,7 @@ data:
                 [mode.cloud.stream.server]
                     grpcport = 9000
                     logport = 51010
+                    metricsport = 6000
                     key = "/etc/superedge/tunnel/certs/tunnel-cloud-server.key"
                     cert = "/etc/superedge/tunnel/certs/tunnel-cloud-server.crt"
                     tokenfile = "/etc/superedge/tunnel/token/token"
@@ -82,7 +83,7 @@ data:
                 key = "/etc/superedge/tunnel/certs/apiserver-kubelet-server.key"
                 [mode.cloud.https.addr]
                     "10250" = "127.0.0.1:10250"
-                    "10300" = "127.0.0.1:10250"
+                    "9100" = "127.0.0.1:9100"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -120,6 +121,10 @@ spec:
       port: 22
       protocol: TCP
       targetPort: 22
+    - name: tunnel-metrics
+      port: 6000
+      protocol: TCP
+      targetPort: 6000
   selector:
     app: tunnel-cloud
   type: NodePort
@@ -144,7 +149,7 @@ spec:
       serviceAccountName: tunnel-cloud
       containers:
         - name: tunnel-cloud
-          image: superedge/tunnel:v0.4.0
+          image: superedge.tencentcloudcr.com/superedge/tunnel:v0.5.0
           imagePullPolicy: IfNotPresent
           livenessProbe:
             httpGet:
@@ -173,6 +178,11 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
           volumeMounts:
             - name: token
               mountPath: /etc/superedge/tunnel/token
